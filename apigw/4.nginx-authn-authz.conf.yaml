@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-authn-authz-conf
+  namespace: nginx-authn-authz
+data:
+  nginx-authn-authz.conf: |-
+    upstream upstream-db {
+      zone upstream-db 64k;
+
+      # Upstream DB REST API endpoint
+      server backend-db.nginx-authn-authz.svc.cluster.local:5000;
+    }
+
+    proxy_cache_path /var/cache/nginx/jwk levels=1 keys_zone=jwk:1m max_size=10m;
+    proxy_cache_path /var/tmp/cache levels=1:2 keys_zone=dbQueryCache:10m max_size=20m inactive=1m use_temp_path=off;
+    proxy_cache_key "$scheme://$host$request_uri$query_string";
+
+    log_format jwt '$remote_addr - $remote_user [$time_local] "$request" '
+      '$status $body_bytes_sent "$http_referer" "$http_user_agent" '
+      '$jwt_header_alg $jwt_claim_sub';
+
+    auth_jwt_claim_set $jwt_claim_roles roles;
+
+    server {
+      server_name $host;
+      resolver 8.8.8.8;
+      listen 80;
+
+      location / {
+        auth_jwt "authentication required";
+        auth_jwt_key_request /_jwks_uri;
+
+        access_log /var/log/nginx/access_jwt.log jwt;
+
+        js_content nginxauthnauthz.dbQuery;
+      }
+
+      location = /_jwks_uri {
+        internal;
+        proxy_method GET;
+        proxy_cache  jwk; # Cache responses
+        proxy_pass   http://upstream-db/jwks.json; # Obtain keys from here
+      }
+
+      location ~ /dbQuery/(.*) {
+        internal;
+
+        proxy_cache dbQueryCache;
+        proxy_cache_bypass $http_pragma;
+        proxy_cache_lock on;
+        proxy_cache_valid 200 1m;
+
+        proxy_pass http://upstream-db/$1;
+      }
+
+      location ~ /steeringMode/(.*) {
+        internal;
+
+        proxy_ssl_session_reuse off;
+        proxy_ssl_server_name on;
+        proxy_pass $1;
+      }
+    }

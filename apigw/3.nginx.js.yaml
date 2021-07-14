@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-js
+  namespace: nginx-authn-authz
+data:
+  nginx.js: |-
+    export default {dbQuery};
+
+    function dbQuery(r) {
+      r.warn('------------------------------');
+      r.warn('Client['+r.remoteAddress+'] Method['+r.method+'] Host['+r.headersIn['host']+'] URI ['+r.uri+'] Body['+r.requestBody+']');
+
+      // Queries the backend db
+      r.warn('Subrequest [/dbQuery/backend/fetchkey'+r.uri+']');
+      r.subrequest('/dbQuery/backend/fetchkey'+r.uri,'',subReqCallback);
+
+      function subReqCallback(reply) {
+        if(reply.status!=200) {
+          // Rule not found
+
+          r.warn('Rule not found - returning 404');
+          r.return(404);
+        } else {
+          r.warn('subReqCallback got 200');
+          r.warn('JSON reply: URI['+reply.uri+'] status['+reply.status.toString()+'] body['+reply.responseText+']');
+
+          var body = JSON.parse(reply.responseText);
+
+          if (body.rule.enabled=='false') {
+            // Rule is disabled
+
+            r.warn('Rule is disabled - returning 404');
+            r.return(404);
+          } else {
+            r.warn('Rewrite rule ['+r.headersIn['host']+r.uri+'] -> ['+body.rule.operation.url+']');
+
+            // Authorization checks
+            r.warn('Checking authorization');
+
+            // HTTP method check
+            var authZok=0;
+
+            if (r.method == body.rule.matchRules.method) {
+              // X-AuthZ header check
+              if (r.headersIn['x-authz'] == body.rule.matchRules.xauthz) {
+                // JWT role check
+                r.warn('JWT roles ['+r.variables.jwt_claim_roles+'] -> ['+body.rule.matchRules.roles+']');
+
+                if (body.rule.matchRules.roles.indexOf(r.variables.jwt_claim_roles) >= 0) {
+                  authZok=1;
+                }
+              }
+            }
+
+            if (authZok == 1) {
+              // Proxies the client request
+              r.subrequest('/steeringMode/'+body.rule.operation.url,{method: r.method},steeringModeSubReqCallback);
+            } else {
+              r.warn('Authorization failed: HTTP method['+r.method+'/'+body.rule.matchRules.method+'] X-AuthZ['+r.headersIn['x-authz']+'/'+body.rule.matchRules.xauthz+'] JWT roles['+r.variables.jwt_claim_roles+'/'+body.rule.matchRules.roles+']');
+              r.return(403);
+            }
+          }
+        }
+
+        function steeringModeSubReqCallback(steeringReply) {
+          // Steering mode - returns the steered API response back to the client
+
+          r.warn('steeringModeSubReqCallback got ['+steeringReply.status+'] ['+steeringReply.responseText+']');
+
+          r.status=steeringReply.status;
+
+          for (var header in steeringReply.headersOut) {
+            r.headersOut[header] = steeringReply.headersOut[header];
+          }
+
+          r.sendHeader();
+          r.send(steeringReply.responseText);
+          r.finish();
+        }
+      }
+    }

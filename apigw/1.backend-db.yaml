@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-db
+  namespace: nginx-authn-authz
+  labels:
+    app: backend-db
+spec:
+  selector:
+    matchLabels:
+      app: backend-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: backend-db
+    spec:
+      containers:
+      - name: backend-db
+        image: YOUR_PRIVATE_REGISTRY/nginx-authn-authz-backend-db:1.1
+        ports:
+        - containerPort: 5000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-db
+  namespace: nginx-authn-authz
+  labels:
+    app: backend-db
+spec:
+  ports:
+  - port: 5000
+  selector:
+    app: backend-db
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend-db
+  namespace: nginx-authn-authz
+  annotations:
+    nginx.org/proxy-connect-timeout: "30s"
+    nginx.org/proxy-read-timeout: "20s"
+    nginx.org/client-max-body-size: "4m"
+    nginx.com/health-checks: "true"
+  labels:
+    app: backend-db
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: db.nginx-authn-authz.ff.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-db
+                port:
+                  number: 5000
