@@ -61,8 +61,9 @@ docker push YOUR_PRIVATE_REGISTRY/nginx-authn-authz-backend-db:1.0
 
 Spinning up NGINX Plus:
 
-1. Update the backend DB image reference in 1.backend-db.yaml
-2. Run the following commands
+1. Update the backend DB "image" line referenced in 1.backend-db.yaml
+2. Update the NGINX Plus "image" line referenced in 5.nginx-apigw.yaml
+3. Run the following commands
 
 ```
 cd apigw

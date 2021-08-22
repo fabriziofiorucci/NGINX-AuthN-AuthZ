@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: nginx-apigw
-        image: registry.ff.lan:31005/nginxplus-js-lua
+        image: YOUR_PRIVATE_REGISTRY/nginxplus-js-lua
         ports:
         - containerPort: 80
         - containerPort: 8080
