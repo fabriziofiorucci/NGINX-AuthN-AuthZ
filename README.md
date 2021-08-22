@@ -50,9 +50,7 @@ https://docs.nginx.com/nginx/admin-guide/installing-nginx/installing-nginx-docke
 
 ## Deploying this repository
 
-Building the backend DB:
-
-1. Run the following commands
+Build the backend DB:
 
 ```
 cd backend-db
@@ -60,7 +58,7 @@ docker build --no-cache -t YOUR_PRIVATE_REGISTRY/nginx-authn-authz-backend-db:1.
 docker push YOUR_PRIVATE_REGISTRY/nginx-authn-authz-backend-db:1.0
 ```
 
-Spinning up NGINX Plus:
+Spin up NGINX Plus:
 
 1. Update the backend DB "image" line referenced in 1.backend-db.yaml
 2. Update the NGINX Plus "image" line referenced in 5.nginx-apigw.yaml
