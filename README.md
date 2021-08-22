@@ -36,6 +36,7 @@ The backend DB provides an endpoint (at /jwks.json) used by NGINX Plus to fetch 
 ## Prerequisites
 
 - Kubernetes or Openshift cluster
+- Linux VM with Docker to build all images
 - Private registry to push the NGINX Plus and backend DB images
 - The NGINX Plus image must include javascript (nginx-plus-module-njs) support
 
