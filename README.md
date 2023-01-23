@@ -264,7 +264,7 @@ $ curl -s http://db.nginx-authn-authz.ff.lan/backend/fetchkey/v1.0/getRandomFact
 
 ## REST API access test
 
-Get NGINX Plus pod name:
+Display running pods:
 
 ```
 $ kubectl get pods -n nginx-authn-authz
@@ -276,7 +276,7 @@ nginx-apigw-5b567bd46d-4dzlw   1/1     Running   0          30s
 Display NGINX Plus logs:
 
 ```
-$ kubectl logs nginx-apigw-5b567bd46d-4dzlw -n nginx-authn-authz -f
+$ kubectl logs -l app=nginx-apigw -n nginx-authn-authz -f
 ```
 
 Open another terminal and use:
