@@ -9,7 +9,7 @@ data:
 
     function dbQuery(r) {
       r.warn('------------------------------');
-      r.warn('Client['+r.remoteAddress+'] Method['+r.method+'] Host['+r.headersIn['host']+'] URI ['+r.uri+'] Body['+r.requestBody+']');
+      r.warn('Client['+r.remoteAddress+'] Method['+r.method+'] Host['+r.headersIn['host']+'] URI ['+r.uri+'] Body['+r.requestText+']');
 
       // Queries the backend db
       r.warn('Subrequest [/dbQuery/backend/fetchkey'+r.uri+']');
