@@ -1,5 +1,7 @@
 # NGINX Plus API Gateway / AuthN / AuthZ with external backend DB
 
+## This repository has been archived, its evolution is available at https://github.com/fabriziofiorucci/NGINX-API-Steering
+
 ## Description
 
 This is a sample NGINX Plus API Gateway configuration to publish REST APIs enforcing authentication and authorization.
